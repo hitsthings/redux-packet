@@ -53,22 +53,24 @@ Create packets of state that can be used across your app:
 import { packAll } from 'redux-packet';
 
 const users = packAll({
-    // Each property you pass to packAll becomes a function that can be called to consume a packet.
-    // any selector functions or values passed to `forGroup()` will become parameters to the selector and actions functions
-    // E.g. we could call `users.forGroup(props => props.groupId)` to grab a groupId from the component props or `users.forGroup(4)`
-    // to pass a constant value through
+
+    // Each property you pass to packAll becomes a packet-making function.
+    // The packet-making function takes in prop selectors as arguments.
+    // E.g. this can be used like `user.forGroup(props => props.groupId)`
     forGroup: {
-        // selector will be called as part of mapStateToProps and can return any useful props when thinking about "users for a group".
-        // A nice option is to use Reselect's createStructuredSelector here
+
+        // The `selector` property is analogous to mapStateToProps, but it takes in the results of the prop selectors instead of props themselves
+        // It should return the props to inject into a component
         selector: (state, groupId) => {
             return {
                 users: state.groups[groupId].users,
                 //... anything else someone might want for working with users
             };
         },
-        // actions will be called as part of mapDispatchToProps and should return functions that dispatch actions.
-        // if you don't need any context like groupId, you can use a plain object here and each function property will be converted to a dispatcher
-        // just like with connect()
+
+        // The `actions` property is analogous to mapDispatchToProps, but it takes in the results of the prop selectors instead of props themselves
+        // If you don't need any context like groupId, `actions` can be a plain object and each function property will be composed with `dispatch`,
+        // similar to if you had passed an object to mapDispatchToProps.
         actions: (dispatch, groupId) => {
             return {
                 loadUsers: () => dispatch({
