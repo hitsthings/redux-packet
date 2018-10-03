@@ -1,6 +1,6 @@
-# React Packet
+# Redux Packet
 
-React Packet is an alternative interface to `react-redux` that helps you hide the internal complexity of action creators and selectors from your components and encapsulates that logic in topic-based files.
+Redux Packet is an alternative interface to `react-redux` that helps you hide the internal complexity of action creators and selectors from your components and encapsulates that logic in topic-based files.
 Packet helps you to think in terms of `Users`, `Projects`, `Groups`, `OtherBusinessObjects` instead of separating out `selectors`, `action creators`, and `reducers`.
 
 Instead of this in your components:
@@ -25,7 +25,7 @@ export default connect(mapStateToProps, mapDispatchToProps)(UserList);
 Write this:
 
 ```js
-import { consume } from 'react-packet';
+import { consume } from 'redux-packet';
 import users from './user-packet';
 export default consume(users.forGroup(props => props.groupId))(UserList);
 ```
@@ -35,13 +35,13 @@ export default consume(users.forGroup(props => props.groupId))(UserList);
 If you already have `react-redux` and `redux` in your project, run
 
 ```sh
-npm install --save react-packet
+npm install --save redux-packet
 ```
 
 Otherwise,
 
 ```sh
-npm install --save redux react-redux react-packet
+npm install --save redux react-redux redux-packet
 ```
 
 ## Quick Start
@@ -50,7 +50,7 @@ Create packets of state that can be used across your app:
 
 ```js
 // import packAll where you deal with Redux state, to create a nice consumable packet of state and actions
-import { packAll } from 'react-packet';
+import { packAll } from 'redux-packet';
 
 const users = packAll({
     // Each property you pass to packAll becomes a function that can be called to consume a packet.
@@ -85,7 +85,7 @@ Then consume them in React components:
 
 ```jsx
 // import consume where you create a Redux-connected React.Component
-import { consume } from 'react-packet';
+import { consume } from 'redux-packet';
 
 // a stateless component that might want some user info
 const UserList = ({ users, loadUsers }) => (
@@ -187,7 +187,7 @@ Redux states are generally normalized so that details about an entity can be sha
 }
 ```
 
-But when working with this state in your code, you typically don't want to deal with all that normalized state and understanding how it fits together. Ideally you'd handle that all in one place and expose it in a more intuitive shape. This is where React Packet comes in. It encourages you to create that "one place".
+But when working with this state in your code, you typically don't want to deal with all that normalized state and understanding how it fits together. Ideally you'd handle that all in one place and expose it in a more intuitive shape. This is where Redux Packet comes in. It encourages you to create that "one place".
 
 ### pack()
 
@@ -196,7 +196,7 @@ But when working with this state in your code, you typically don't want to deal 
 ```js
 // state/users.js
 
-import { pack } from 'react-packet';
+import { pack } from 'redux-packet';
 
 export default pack({
     forGroup: {
@@ -252,7 +252,7 @@ const UserList = (users = [], isLoading, hasAllLoaded, errors, loadUsers) => (
 ```
 
 ```js
-import { consume } from 'react-packet';
+import { consume } from 'redux-packet';
 import users from '../state/users';
 import UserList from './user-list';
 
