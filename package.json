@@ -2,13 +2,17 @@
   "name": "redux-packet",
   "version": "0.0.1",
   "description": "Deliver a packet of state and keep your Redux code hidden",
-  "main": "index.js",
+  "main": "dist/redux-packet.js",
+  "browser": "dist/redux-packet.js",
+  "bugs": "https://github.com/hitsthings/redux-packet/issues",
+  "repository": "github:hitsthings/redux-packet",
   "directories": {
     "test": "test"
   },
   "scripts": {
     "test": "jest",
-    "watch": "jest --watch"
+    "watch": "jest --watch",
+    "build": "rollup -c"
   },
   "author": "Adam Ahmed <hitsthings@gmail.com>",
   "license": "MIT",
@@ -17,6 +21,7 @@
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-react": "^7.0.0",
     "babel-core": "^7.0.0-bridge.0",
+    "babel-preset-minify": "^0.5.0",
     "enzyme": "^3.6.0",
     "enzyme-adapter-react-16": "^1.5.0",
     "jest": "^23.6.0",
@@ -25,7 +30,10 @@
     "react-dom": "^16.5.2",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0",
-    "regenerator-runtime": "^0.12.1"
+    "regenerator-runtime": "^0.12.1",
+    "rollup": "^0.66.2",
+    "rollup-plugin-babel": "^4.0.3",
+    "rollup-plugin-size-snapshot": "^0.7.0"
   },
   "peerDependencies": {
     "react-redux": "^5.0.7",

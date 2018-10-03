@@ -5,7 +5,7 @@ import { createStore } from 'redux';
 import { connect, Provider } from 'react-redux';
 
 import { packAll } from '../src/pack';
-import consume from '../src/consume';
+import { consume } from '../src/consume';
 
 function immutableSet(o, path, v) {
     path = path.split('.');

@@ -143,7 +143,7 @@ export const makeMergeProps = (mapPacketsToProps, mergeProps) => {
     };
 };
 
-const consume = (
+export const consume = (
     packets,
     mapPacketsToProps,
     mergeProps,
@@ -165,5 +165,3 @@ const consume = (
         options
     );
 };
-
-export default consume;

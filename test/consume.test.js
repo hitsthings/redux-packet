@@ -1,4 +1,4 @@
-import consume, { consumeOnePacket, makeMergePropsOnePacket } from '../src/consume.js';
+import { consume, consumeOnePacket, makeMergePropsOnePacket } from '../src/consume.js';
 import { connect } from 'react-redux';
 
 import { stringifyArgs } from './util';
