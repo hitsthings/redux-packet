@@ -28,18 +28,18 @@ const spreadAllSafe = fallbackName => (...values) => {
     }
     return Object.assign({}, ...values);
 };
-const defaultMapBundlesToProps = spreadAllSafe("mapBundlesToProps");
-const defaultMergeProps = (bundleProps, ownProps) => ({
-    ...bundleProps,
+const defaultMapPacketsToProps = spreadAllSafe("mapPacketsToProps");
+const defaultMergeProps = (packetProps, ownProps) => ({
+    ...packetProps,
     ...ownProps
 })
 
 const noop = () => {};
 
-const anyContext = (bundles, prop) => bundles.some(b => typeof b[prop] === 'function' && b[prop].length !== 1);
+const anyContext = (packets, prop) => packets.some(b => typeof b[prop] === 'function' && b[prop].length !== 1);
 
-export const makeMergePropsOneBundle = (mapBundlesToProps, mergeProps) => {
-    if (!mapBundlesToProps) {
+export const makeMergePropsOnePacket = (mapPacketsToProps, mergeProps) => {
+    if (!mapPacketsToProps) {
         if (!mergeProps) {
             return undefined;
         }
@@ -53,7 +53,7 @@ export const makeMergePropsOneBundle = (mapBundlesToProps, mergeProps) => {
     }
     if (!mergeProps) {
         return (stateProps, dispatchProps, ownProps) => ({
-            ...mapBundlesToProps({
+            ...mapPacketsToProps({
                 ...stateProps,
                 ...dispatchProps
             }),
@@ -61,7 +61,7 @@ export const makeMergePropsOneBundle = (mapBundlesToProps, mergeProps) => {
         });
     }
     return (stateProps, dispatchProps, ownProps) => mergeProps(
-        mapBundlesToProps({
+        mapPacketsToProps({
             ...stateProps,
             ...dispatchProps
         }),
@@ -69,42 +69,42 @@ export const makeMergePropsOneBundle = (mapBundlesToProps, mergeProps) => {
     );
 };
 
-export const consumeOneBundle = (
-    bundle,
-    mapBundlesToProps,
+export const consumeOnePacket = (
+    packet,
+    mapPacketsToProps,
     mergeProps,
     options
 ) => connect(
-    bundle.mapStateToProps || undefined,
-    bundle.mapDispatchToProps || undefined,
-    makeMergePropsOneBundle(mapBundlesToProps, mergeProps),
+    packet.mapStateToProps || undefined,
+    packet.mapDispatchToProps || undefined,
+    makeMergePropsOnePacket(mapPacketsToProps, mergeProps),
     options
 );
 
-export const makeMapStateToProps = (bundles, withState) =>
+export const makeMapStateToProps = (packets, withState) =>
     (withState.length || undefined) && (
         anyContext(withState, 'mapStateToProps')
             ? (state, props) => {
-                const mapStateToPropsList = bundles
+                const mapStateToPropsList = packets
                     .map(b => b.mapStateToProps ? b.mapStateToProps(state, props) : noop);
                 return (state, props) => ({
-                    bundles: mapStateToPropsList.map(mapper => mapper(state, props))
+                    packets: mapStateToPropsList.map(mapper => mapper(state, props))
                 });
             }
             : state => {
-                const mapStateToPropsList = bundles
+                const mapStateToPropsList = packets
                     .map(b => b.mapStateToProps ? b.mapStateToProps(state) : noop);
                 return state => ({
-                    bundles: mapStateToPropsList.map(mapper => mapper(state))
+                    packets: mapStateToPropsList.map(mapper => mapper(state))
                 });
             }
     );
 
-export const makeMapDispatchToProps = (bundles, withDispatch) =>
+export const makeMapDispatchToProps = (packets, withDispatch) =>
     (withDispatch.length || undefined) && (
         anyContext(withDispatch, 'mapDispatchToProps')
             ? (dispatch, props) => ({
-                bundles: bundles.map(b =>
+                packets: packets.map(b =>
                     b.mapDispatchToProps
                         ? typeof b.mapDispatchToProps === 'function'
                             ? b.mapDispatchToProps(dispatch, props)
@@ -113,7 +113,7 @@ export const makeMapDispatchToProps = (bundles, withDispatch) =>
                 )
             })
             : (dispatch) => ({
-                bundles: bundles.map(b =>
+                packets: packets.map(b =>
                     b.mapDispatchToProps
                         ? typeof b.mapDispatchToProps === 'function'
                             ? b.mapDispatchToProps(dispatch)
@@ -123,46 +123,45 @@ export const makeMapDispatchToProps = (bundles, withDispatch) =>
             })
     );
 
-export const makeMergeProps = (mapBundlesToProps, mergeProps) => {
-    if (!mapBundlesToProps) {
-        mapBundlesToProps = defaultMapBundlesToProps;
+export const makeMergeProps = (mapPacketsToProps, mergeProps) => {
+    if (!mapPacketsToProps) {
+        mapPacketsToProps = defaultMapPacketsToProps;
     }
     if (!mergeProps) {
         mergeProps = defaultMergeProps;
     }
     return (stateProps, dispatchProps, ownProps) => {
-        const bundledProps = {};
-        const propsByBundle = stateProps.bundles.map((bundleState, i) => {
-            const bundleDispatch = dispatchProps.bundles[i];
+        const propsByPacket = stateProps.packets.map((packetState, i) => {
+            const packetDispatch = dispatchProps.packets[i];
             return {
-                ...bundleState,
-                ...bundleDispatch
+                ...packetState,
+                ...packetDispatch
             };
         });
-        const bundleProps = mapBundlesToProps(...propsByBundle);
-        return mergeProps(bundleProps, ownProps);
+        const packetProps = mapPacketsToProps(...propsByPacket);
+        return mergeProps(packetProps, ownProps);
     };
 };
 
 const consume = (
-    bundles,
-    mapBundlesToProps,
+    packets,
+    mapPacketsToProps,
     mergeProps,
     options
 ) => {
-    if (bundles && (bundles.mapStateToProps || bundles.mapDispatchToProps)) {
-        bundles = [bundles];
+    if (packets && (packets.mapStateToProps || packets.mapDispatchToProps)) {
+        packets = [packets];
     }
-    if (!Array.isArray(bundles) || bundles.length === 0) {
-        throw new TypeError('At least one bundle must be passed to component()')
+    if (!Array.isArray(packets) || packets.length === 0) {
+        throw new TypeError('At least one packets must be passed to component()')
     }
 
-    if (bundles.length === 1) return consumeOneBundle(bundles[0], mapBundlesToProps, mergeProps, options);
+    if (packets.length === 1) return consumeOnePacket(packets[0], mapPacketsToProps, mergeProps, options);
 
     return connect(
-        makeMapStateToProps(bundles, bundles.filter(b => b.mapStateToProps)),
-        makeMapDispatchToProps(bundles, bundles.filter(b => b.mapDispatchToProps)),
-        makeMergeProps(mapBundlesToProps, mergeProps),
+        makeMapStateToProps(packets, packets.filter(b => b.mapStateToProps)),
+        makeMapDispatchToProps(packets, packets.filter(b => b.mapDispatchToProps)),
+        makeMergeProps(mapPacketsToProps, mergeProps),
         options
     );
 };

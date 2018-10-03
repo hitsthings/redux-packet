@@ -1,14 +1,14 @@
 import { bindActionCreators } from "redux";
 
 /*
-//usage of bundle
-bundler({
+//usage of pack
+packAll({
     fromContext: {
         selector: (state, contextA, contextB) => `itemsInContext`, // or a function returning this to make one per component
         actions: (contextA, contextB) => `actionsForContext`,
     }
 })
-const users = bundle({
+const users = pack({
     fromGroup: {
         selector: () => createStructuredSelector({
             users: usersForGroupSelector,
@@ -48,30 +48,30 @@ const memoizeFirstMapStateToProps = (selector, executeContextSelectors, firstSta
     return state => inner(state);
 };
 
-const checkBundleDescriptor = (bundleDescriptor, name, calledFnName, argExpectation) => {
-    if (typeof bundleDescriptor !== 'object' || bundleDescriptor === null) {
+const checkPacketDescriptor = (packetDescriptor, name, calledFnName, argExpectation) => {
+    if (typeof packetDescriptor !== 'object' || packetDescriptor === null) {
         throw new TypeError(`${calledFnName} expects ${argExpectation}an object, but ${name} was not.`);
     }
-    if (bundleDescriptor.selector && typeof bundleDescriptor.selector !== 'function') {
+    if (packetDescriptor.selector && typeof packetDescriptor.selector !== 'function') {
         throw new TypeError(`${calledFnName} expects selector to be a function, but ${name}.selector was not.`);
     }
-    if (bundleDescriptor.actions && (typeof bundleDescriptor.actions !== 'function' && typeof bundleDescriptor.actions !== 'object')) {
+    if (packetDescriptor.actions && (typeof packetDescriptor.actions !== 'function' && typeof packetDescriptor.actions !== 'object')) {
         throw new TypeError(`${calledFnName} expects actions to be a function or object, but ${name}.actions was not.`);
     }
 };
 
-const checkBundleMapAndGetNames = bundleMap => {
-    if (typeof bundleMap !== 'object' || bundleMap === null) {
-        throw new TypeError('bundleAll(bundleMap) expects bundleMap to be an object.');
+const checkPacketMapAndGetNames = packetMap => {
+    if (typeof packetMap !== 'object' || packetMap === null) {
+        throw new TypeError('packAll(packetMap) expects packetMap to be an object.');
     }
-    if (Array.isArray(bundleMap)) {
-        throw new TypeError('bundleAll(bundleMap) expects bundleMap to be an object, not an Array.');
+    if (Array.isArray(packetMap)) {
+        throw new TypeError('packAll(packetMap) expects packetMap to be an object, not an Array.');
     }
-    const bundleNames = Object.keys(bundleMap);
-    if (bundleNames.length === 0) {
-        throw new TypeError('bundleAll(bundleMap) expected to receive an object with properties, but found no properties.')
+    const packetNames = Object.keys(packetMap);
+    if (packetNames.length === 0) {
+        throw new TypeError('packAll(packetMap) expected to receive an object with properties, but found no properties.')
     }
-    return bundleNames;
+    return packetNames;
 };
 
 const selectorExecutor = selectors => {
@@ -79,18 +79,18 @@ const selectorExecutor = selectors => {
     return props => selectors.map(selector => selector(props));
 };
 
-const internalBundle = (bundleDescriptor, name) => {
-    const Bundle = (...contextSelectors) => {
+const internalPack = (packetDescriptor, name) => {
+    const PacketMaker = (...contextSelectors) => {
         const hasContext = contextSelectors.length !== 0;
         const executeContextSelectors = hasContext && selectorExecutor(contextSelectors);
-        if ('minimumSelectorsExpected' in bundleDescriptor && contextSelectors.length < bundleDescriptor.minimumSelectorsExpected) {
-            throw new Error(`The bundle ${name} expects at least ${bundleDescriptor.minimumSelectorsExpected} selectors to be provided.`);
+        if ('minimumSelectorsExpected' in packetDescriptor && contextSelectors.length < packetDescriptor.minimumSelectorsExpected) {
+            throw new Error(`The packet ${name} expects at least ${packetDescriptor.minimumSelectorsExpected} selectors to be provided.`);
         }
-        const mapStateToProps = bundleDescriptor.selector ? (firstState, firstProps) => {
+        const mapStateToProps = packetDescriptor.selector ? (firstState, firstProps) => {
             const firstContext = hasContext ? executeContextSelectors(firstProps) : [];
-            let firstValue = bundleDescriptor.selector(firstState, ...firstContext);
+            let firstValue = packetDescriptor.selector(firstState, ...firstContext);
             if (typeof firstValue !== 'function') { // no factory, fully memoized first call
-                return memoizeFirstMapStateToProps(bundleDescriptor.selector, executeContextSelectors, firstState, firstProps, firstValue, firstContext);
+                return memoizeFirstMapStateToProps(packetDescriptor.selector, executeContextSelectors, firstState, firstProps, firstValue, firstContext);
             }
             if (hasContext) { // factory, but memoize first context if we can. Passing in a new object as firstState means we'll never return a memoized firstValue
                 return memoizeFirstMapStateToProps(firstValue, executeContextSelectors, {}, firstProps, null, firstContext);
@@ -98,12 +98,12 @@ const internalBundle = (bundleDescriptor, name) => {
             // factory, no context, no memoization
             return state => firstValue(state);
         } : null;
-        const mapDispatchToProps = typeof bundleDescriptor.actions === 'function' ?
+        const mapDispatchToProps = typeof packetDescriptor.actions === 'function' ?
             hasContext ?
-                (dispatch, props) => bundleDescriptor.actions(dispatch, ...executeContextSelectors(props)) :
-                dispatch => bundleDescriptor.actions(dispatch) :
-            bundleDescriptor.actions ?
-                dispatch => bindActionCreators(bundleDescriptor.actions, dispatch) :
+                (dispatch, props) => packetDescriptor.actions(dispatch, ...executeContextSelectors(props)) :
+                dispatch => packetDescriptor.actions(dispatch) :
+                packetDescriptor.actions ?
+                dispatch => bindActionCreators(packetDescriptor.actions, dispatch) :
                 null;
         return {
             mapStateToProps,
@@ -111,27 +111,27 @@ const internalBundle = (bundleDescriptor, name) => {
         };
     };
     if (name) {
-        Object.defineProperty(Bundle, 'name', {
+        Object.defineProperty(PacketMaker, 'name', {
             writable: false,
             enumerable: false,
             configurable: true,
-            value: `Bundle(${name})`
+            value: `PacketMaker(${name})`
         });
     }
-    return Bundle;
+    return PacketMaker;
 };
 
-export const bundle = (bundleDescriptor, name) => {
-    checkBundleDescriptor(bundleDescriptor, "bundleDescriptor", "bundle(bundleDescriptor)", "");
-    return internalBundle(bundleDescriptor, name);
+export const pack = (packetDescriptor, name) => {
+    checkPacketDescriptor(packetDescriptor, "packetDescriptor", "pack(packetDescriptor)", "");
+    return internalPack(packetDescriptor, name);
 };
 
-export const bundleAll = bundleMap => {
-    const bundleNames = checkBundleMapAndGetNames(bundleMap);
-    return bundleNames.reduce((o,name) => {
-        const bundleDescriptor = bundleMap[name];
-        checkBundleDescriptor(bundleDescriptor, `bundleMap['${name}']`, "bundleAll(bundleMap)", "each property to be ");
-        o[name] = internalBundle(bundleDescriptor, name);
+export const packAll = packetMap => {
+    const packetNames = checkPacketMapAndGetNames(packetMap);
+    return packetNames.reduce((o,name) => {
+        const packetDescriptor = packetMap[name];
+        checkPacketDescriptor(packetDescriptor, `packetMap['${name}']`, "packAll(packetMap)", "each property to be ");
+        o[name] = internalPack(packetDescriptor, name);
         return o;
     }, {});
 };

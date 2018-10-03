@@ -1,6 +1,6 @@
-import { bundleAll } from '../src/bundle.js';
+import { packAll } from '../src/pack.js';
 
-describe('bundleAll()', () => {
+describe('packAll()', () => {
     describe('contract assertions', () => {
         describe('throws on invalid input', () => {
             [
@@ -25,7 +25,7 @@ describe('bundleAll()', () => {
                 {a: {actions:'string'}},
             ].forEach(value =>
                 it(String(JSON.stringify(value)), () => {
-                    expect(() => bundleAll(value).toThrowErrorMatchingSnapshot())
+                    expect(() => packAll(value).toThrowErrorMatchingSnapshot())
                 })
             );
         });
@@ -38,33 +38,33 @@ describe('bundleAll()', () => {
                 { a:{ actions: () => {} } },
             ].forEach(value => {
                 it(String(JSON.stringify(value)), () => {
-                    expect(() => bundleAll(value)).not.toThrow();
+                    expect(() => packAll(value)).not.toThrow();
                 })
             })
         });
         
         it('returns an object of functions with keys matching the input', () => {
-            expect(bundleAll({ a: {}})).toEqual({ a: expect.any(Function) });
+            expect(packAll({ a: {}})).toEqual({ a: expect.any(Function) });
         });
     });
 
     describe('minimumSelectorsExpected', () => {
         it('does not validate if not passed in', () => {
-            const bundled = bundleAll({ a: { }});
-            expect(() => bundled.a()).not.toThrow();
+            const packed = packAll({ a: { }});
+            expect(() => packed.a()).not.toThrow();
         })
         it('validates contextSelector count', () => {
-            const bundled = bundleAll({ a: { minimumSelectorsExpected: 1 }});
-            expect(() => bundled.a()).toThrowErrorMatchingSnapshot();
-            expect(() => bundled.a(() => {})).not.toThrow();
-            expect(() => bundled.a(() => {}, () => {})).not.toThrow();
+            const packed = packAll({ a: { minimumSelectorsExpected: 1 }});
+            expect(() => packed.a()).toThrowErrorMatchingSnapshot();
+            expect(() => packed.a(() => {})).not.toThrow();
+            expect(() => packed.a(() => {}, () => {})).not.toThrow();
         });
     });
 
-    describe('bundles', () => {
+    describe('packets', () => {
         describe('with context', () => {
             describe('simple', () => {
-                let bundledWithContext, contextProviderA, makeSelector, selector, loadActionCreator;
+                let packedWithContext, contextProviderA, makeSelector, selector, loadActionCreator;
                 const contextValue = 40;
                 const mappedProps = { prop: 42 };
                 const loadAction = { type: 'A' };
@@ -72,7 +72,7 @@ describe('bundleAll()', () => {
                     contextProviderA = jest.fn().mockReturnValue(contextValue);
                     selector = jest.fn().mockReturnValue(mappedProps);
                     loadActionCreator = jest.fn().mockReturnValue(loadAction);
-                    bundledWithContext = bundleAll({
+                    packedWithContext = packAll({
                         a: {
                             selector,
                             actions: {
@@ -81,15 +81,15 @@ describe('bundleAll()', () => {
                         }
                     }).a(contextProviderA);
                 });
-                it('returns all bundle props', () => {
-                    expect(bundledWithContext).toEqual({
+                it('returns all packet props', () => {
+                    expect(packedWithContext).toEqual({
                         mapStateToProps: expect.any(Function),
                         mapDispatchToProps: expect.any(Function),
                     });
                 });
                 it('calls selector in makeMapStateToProps', () => {
                     const state = {}, props = {};
-                    const mapStateToProps = bundledWithContext.mapStateToProps(state, props);
+                    const mapStateToProps = packedWithContext.mapStateToProps(state, props);
                     expect(selector).lastCalledWith(state, contextValue);
 
                     const mapped = mapStateToProps(state, props);
@@ -100,7 +100,7 @@ describe('bundleAll()', () => {
                 });
                 it('calls actions in mapDispatchToProps', () => {
                     const dispatch = jest.fn(), props = {};
-                    const mapped = bundledWithContext.mapDispatchToProps(dispatch, props);
+                    const mapped = packedWithContext.mapDispatchToProps(dispatch, props);
                     expect(mapped).toEqual({
                         load: expect.any(Function)
                     });
@@ -115,7 +115,7 @@ describe('bundleAll()', () => {
             });
 
             describe('complex', () => {
-                let bundled, contextProviderA, makeSelector, selector, actions;
+                let packed, contextProviderA, makeSelector, selector, actions;
                 const contextValue = 40;
                 const mappedProps = { prop: 42 };
                 const mappedActions = {
@@ -126,22 +126,22 @@ describe('bundleAll()', () => {
                     selector = jest.fn().mockReturnValue(mappedProps);
                     makeSelector = jest.fn().mockReturnValue(selector);
                     actions = jest.fn().mockReturnValue(mappedActions);
-                    bundled = bundleAll({
+                    packed = packAll({
                         a: {
                             selector: makeSelector,
                             actions,
                         }
                     });
                 });
-                it('returns all bundle props', () => {
-                    expect(bundled.a(contextProviderA)).toEqual({
+                it('returns all packet props', () => {
+                    expect(packed.a(contextProviderA)).toEqual({
                         mapStateToProps: expect.any(Function),
                         mapDispatchToProps: expect.any(Function),
                     });
                 });
                 it('calls makeSelector and selector in makeMapStateToProps', () => {
                     const state = {}, props = {};
-                    const mapStateToProps = bundled.a(contextProviderA).mapStateToProps(state, props);
+                    const mapStateToProps = packed.a(contextProviderA).mapStateToProps(state, props);
                     expect(makeSelector).lastCalledWith(state, contextValue);
                     expect(selector).not.toHaveBeenCalled();
 
@@ -156,7 +156,7 @@ describe('bundleAll()', () => {
                 });
                 it('calls actions in mapDispatchToProps', () => {
                     const dispatch = jest.fn(), props = {};
-                    const mapped = bundled.a(contextProviderA).mapDispatchToProps(dispatch, props);
+                    const mapped = packed.a(contextProviderA).mapDispatchToProps(dispatch, props);
                     expect(actions).lastCalledWith(dispatch, contextValue);
                     expect(mapped).toBe(mappedActions);
 
@@ -170,14 +170,14 @@ describe('bundleAll()', () => {
 
         describe('without context', () => {
             describe('simple', () => {
-                let bundled, makeSelector, selector, loadActionCreator;
+                let packed, makeSelector, selector, loadActionCreator;
                 const contextValue = 40;
                 const mappedProps = { prop: 42 };
                 const loadAction = { type: 'A' };
                 beforeEach(() => {
                     selector = jest.fn().mockReturnValue(mappedProps);
                     loadActionCreator = jest.fn().mockReturnValue(loadAction);
-                    bundled = bundleAll({
+                    packed = packAll({
                         a: {
                             selector,
                             actions: {
@@ -186,15 +186,15 @@ describe('bundleAll()', () => {
                         }
                     }).a();
                 });
-                it('returns all bundle props', () => {
-                    expect(bundled).toEqual({
+                it('returns all packet props', () => {
+                    expect(packed).toEqual({
                         mapStateToProps: expect.any(Function),
                         mapDispatchToProps: expect.any(Function),
                     });
                 });
                 it('calls selector in makeMapStateToProps', () => {
                     const state = {}, props = {};
-                    const mapStateToProps = bundled.mapStateToProps(state, props);
+                    const mapStateToProps = packed.mapStateToProps(state, props);
                     expect(selector).lastCalledWith(state);
 
                     const mapped = mapStateToProps(state, props);
@@ -204,7 +204,7 @@ describe('bundleAll()', () => {
                 });
                 it('calls actions in mapDispatchToProps', () => {
                     const dispatch = jest.fn(), props = {};
-                    const mapped = bundled.mapDispatchToProps(dispatch, props);
+                    const mapped = packed.mapDispatchToProps(dispatch, props);
                     expect(mapped).toEqual({
                         load: expect.any(Function)
                     });
@@ -218,7 +218,7 @@ describe('bundleAll()', () => {
             });
 
             describe('complex', () => {
-                let bundled, makeSelector, selector, actions;
+                let packed, makeSelector, selector, actions;
                 const mappedProps = { prop: 42 };
                 const mappedActions = {
                     load: () => ({ type: 'A' })
@@ -227,22 +227,22 @@ describe('bundleAll()', () => {
                     selector = jest.fn().mockReturnValue(mappedProps);
                     makeSelector = jest.fn().mockReturnValue(selector);
                     actions = jest.fn().mockReturnValue(mappedActions);
-                    bundled = bundleAll({
+                    packed = packAll({
                         a: {
                             selector: makeSelector,
                             actions,
                         }
                     });
                 });
-                it('returns all bundle props', () => {
-                    expect(bundled.a()).toEqual({
+                it('returns all packet props', () => {
+                    expect(packed.a()).toEqual({
                         mapStateToProps: expect.any(Function),
                         mapDispatchToProps: expect.any(Function),
                     });
                 });
                 it('calls makeSelector and selector in makeMapStateToProps', () => {
                     const state = {}, props = {};
-                    const mapStateToProps = bundled.a().mapStateToProps(state, props);
+                    const mapStateToProps = packed.a().mapStateToProps(state, props);
                     expect(makeSelector).lastCalledWith(state);
                     expect(selector).not.toHaveBeenCalled();
 
@@ -256,7 +256,7 @@ describe('bundleAll()', () => {
                 });
                 it('calls actions in mapDispatchToProps', () => {
                     const dispatch = jest.fn(), props = {};
-                    const mapped = bundled.a().mapDispatchToProps(dispatch, props);
+                    const mapped = packed.a().mapDispatchToProps(dispatch, props);
                     expect(actions).lastCalledWith(dispatch);
                     expect(mapped).toBe(mappedActions);
 

@@ -4,7 +4,7 @@ import ReactTestUtils from 'react-dom/test-utils';
 import { createStore } from 'redux';
 import { connect, Provider } from 'react-redux';
 
-import { bundleAll } from '../src/bundle';
+import { packAll } from '../src/pack';
 import consume from '../src/consume';
 
 function immutableSet(o, path, v) {
@@ -46,7 +46,7 @@ const loadForContext = (dispatch, context) => {
 
 };
 
-const users = bundleAll({
+const users = packAll({
     forGroup: {
         selector: (state, group) => {
             return inContext(get(state, `groups.${group}`));
@@ -136,7 +136,7 @@ const withSupressedLogging = fn => (...args) => {
     }
 }
 
-describe('consume([bundleAll({...})])', () => {
+describe('consume([packAll({...})])', () => {
     beforeEach(() => {
         store.dispatch({ type: '___reset' })
     })
@@ -157,7 +157,7 @@ describe('consume([bundleAll({...})])', () => {
     it('can handle users in a group', testElement(<GroupUsersList groupId={2} />));
     it('can handle users in a project', testElement(<ProjectUsersList projectId={2} />));
     it('can handle users in a project in a group', testElement(<GroupProjectUsersList groupId={3} projectId={2} />));
-    it('can handle multiple bundles', testElement(<GroupProjectUsersList2 groupId={3} projectId={2} />));
+    it('can handle multiple packets', testElement(<GroupProjectUsersList2 groupId={3} projectId={2} />));
     it('throws on duplicate props', () => {
         expect(withSupressedLogging(() => {
             ReactDOM.render(<Provider store={store}><DuplicatePropNames /></Provider>, document.createElement('div'));

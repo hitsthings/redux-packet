@@ -1,7 +1,7 @@
-# React Bundler
+# React Packet
 
-React Bundler is an alternative interface to `react-redux` that helps you hide the internal complexity of action creators and selectors from your components and encapsulates that logic in topic-based files.
-Bundler helps you to think in terms of `Users`, `Projects`, `Groups`, `OtherBusinessObjects` instead of separating out `selectors`, `action creators`, and `reducers`.
+React Packet is an alternative interface to `react-redux` that helps you hide the internal complexity of action creators and selectors from your components and encapsulates that logic in topic-based files.
+Packet helps you to think in terms of `Users`, `Projects`, `Groups`, `OtherBusinessObjects` instead of separating out `selectors`, `action creators`, and `reducers`.
 
 Instead of this in your components:
 
@@ -25,8 +25,8 @@ export default connect(mapStateToProps, mapDispatchToProps)(UserList);
 Write this:
 
 ```js
-import { consume } from 'react-bundler';
-import users from './user-bundle';
+import { consume } from 'react-packet';
+import users from './user-packet';
 export default consume(users.forGroup(props => props.groupId))(UserList);
 ```
 
@@ -35,25 +35,25 @@ export default consume(users.forGroup(props => props.groupId))(UserList);
 If you already have `react-redux` and `redux` in your project, run
 
 ```sh
-npm install --save react-bundler
+npm install --save react-packet
 ```
 
 Otherwise,
 
 ```sh
-npm install --save redux react-redux react-bundler
+npm install --save redux react-redux react-packet
 ```
 
 ## Quick Start
 
-Create bundles of state that can be used across your app:
+Create packets of state that can be used across your app:
 
 ```js
-// import bundleAll where you deal with Redux state, to create a nice consumable packet of state and actions
-import { bundleAll } from 'react-bundler';
+// import packAll where you deal with Redux state, to create a nice consumable packet of state and actions
+import { packAll } from 'react-packet';
 
-const users = bundleAll({
-    // Each property you pass to bundleAll becomes a function that can be called to consume a bundle.
+const users = packAll({
+    // Each property you pass to packAll becomes a function that can be called to consume a packet.
     // any selector functions or values passed to `forGroup()` will become parameters to the selector and actions functions
     // E.g. we could call `users.forGroup(props => props.groupId)` to grab a groupId from the component props or `users.forGroup(4)`
     // to pass a constant value through
@@ -85,7 +85,7 @@ Then consume them in React components:
 
 ```jsx
 // import consume where you create a Redux-connected React.Component
-import { consume } from 'react-bundler';
+import { consume } from 'react-packet';
 
 // a stateless component that might want some user info
 const UserList = ({ users, loadUsers }) => (
@@ -93,7 +93,7 @@ const UserList = ({ users, loadUsers }) => (
     <button onClick={loadUsers}>Load</button>
 );
 
-// grab the bundles you want for your current context and pass them to consume() to create a higher-order component.
+// grab the packets you want for your current context and pass them to consume() to create a higher-order component.
 const withUsersForGroup = consume(users.forGroup(props => props.groupId));
 const GroupUserList = withUsersForGroup(UserList);
 ReactDOM.render(
@@ -104,35 +104,35 @@ ReactDOM.render(
 
 ## API Reference
 
-### bundle(bundleDescription : BundleDescription) : BundleMaker
+### pack(packetDescription : PacketDescription) : PacketMaker
 
-Given a `bundleDescription` return a generated `Bundle` function.
+Given a `packetDescription` return a generated `Packet` function.
 
-#### BundleDescription { selector: Selector|()=>Selector, actions: Actions:{}}
+#### PacketDescription { selector: Selector|()=>Selector, actions: Actions:{}}
 #### Selector (state[, props]) => stateProps
 #### Actions (dispatch[, props]) => dispatchProps
-#### BundleMaker (...contextSelectors) => Bundle
-#### Bundle { mapStateToProps, mapDispatchToProps, minimumSelectorsExpected?: number }
+#### PacketMaker (...contextSelectors) => Packet
+#### Packet { mapStateToProps, mapDispatchToProps, minimumSelectorsExpected?: number }
 
-### bundleAll(bundleDescriptionMap : BundleDescriptionMap) : { [key: string]: BundleMaker }
+### packAll(packetDescriptionMap : PacketDescriptionMap) : { [key: string]: PacketMaker }
 
-Given an object where each property is a `bundleDescription`, return a new object with the same property names whose values are the generated `Bundle`s.
+Given an object where each property is a `packetDescription`, return a new object with the same property names whose values are the generated `Packet`s.
 
-#### BundleDescriptionMap { [key: string]: BundleDescription }
+#### PacketDescriptionMap { [key: string]: PacketDescription }
 
-### consume(bundles[, mapBundlesToProps[, mergeProps[, connectOptions]]]) : Component => ConnectedComponent
+### consume(packets[, mapPacketsToProps[, mergeProps[, connectOptions]]]) : Component => ConnectedComponent
 
-#### bundles Array<Bundle>|Bundle
+#### packets Array<Packet>|Packet
 
-#### mapBundlesToProps(...bundleProps) (...Array<{}>) => {}
+#### mapPacketsToProps(...packetProps) (...Array<{}>) => {}
 
-Takes in the stash and dispatch props from each bundle as a separate argument and combines all properties into one object. For example,
-it might be called like `mapBundlesToProps({ users, loadUsers }, { projects, loadProjects })`. By default each arguments will be combined into
+Takes in the stash and dispatch props from each packet as a separate argument and combines all properties into one object. For example,
+it might be called like `mapPacketsToProps({ users, loadUsers }, { projects, loadProjects })`. By default each arguments will be combined into
 a single object with `Object.assign`.
 
-#### mergeProps(allBundleProps, ownProps) ()
+#### mergeProps(allPacketProps, ownProps) ()
 
-Combine the bundled properties with any properties passed in from the parent. Be default this will use `Object.assign({}, ownProps, allBundledProps)`.
+Combine the packed properties with any properties passed in from the parent. Be default this will use `Object.assign({}, ownProps, allPacketProps)`.
 
 ## Longer Example
 
@@ -187,18 +187,18 @@ Redux states are generally normalized so that details about an entity can be sha
 }
 ```
 
-But when working with this state in your code, you typically don't want to deal with all that normalized state and understanding how it fits together. Ideally you'd handle that all in one place and expose it in a more intuitive shape. This is where React Bundler comes in. It encourages you to create that "one place".
+But when working with this state in your code, you typically don't want to deal with all that normalized state and understanding how it fits together. Ideally you'd handle that all in one place and expose it in a more intuitive shape. This is where React Packet comes in. It encourages you to create that "one place".
 
-### bundle()
+### pack()
 
-`bundle()` is how you create that place. `bundle` lets you define selectors and action creators that take in any context from the caller, and output the appropriate props and actionCreators. Below you'll see a `users.forGroup(props => props.groupId)` bundle and a `users.forProject(props => props.projectId)` bundle. Each has a `selector` and an `actions` property that deliver tailored data about users. 
+`pack()` is how you create that place. `pack` lets you define selectors and action creators that take in any context from the caller, and output the appropriate props and actionCreators. Below you'll see a `users.forGroup(props => props.groupId)` packet and a `users.forProject(props => props.projectId)` packet. Each has a `selector` and an `actions` property that deliver tailored data about users. 
 
 ```js
 // state/users.js
 
-import bundle from 'react-bundler';
+import { pack } from 'react-packet';
 
-export default bundle({
+export default pack({
     forGroup: {
         selector: (state, groupId) => {
             // ...combine all the various bits of state...
@@ -238,7 +238,7 @@ export default bundle({
 
 ### consume()
 
-`consume()` is how you consume a bundle. You call it with your bundles, passing in any required context parameters. It's a higher-order component that will call `connect()` under the hood and provide your component with the bundle properties.
+`consume()` is how you consume a packet. You call it with your packets, passing in any required context parameters. It's a higher-order component that will call `connect()` under the hood and provide your component with the packet properties.
 
 ```jsx
 const UserList = (users = [], isLoading, hasAllLoaded, errors, loadUsers) => (
@@ -252,7 +252,7 @@ const UserList = (users = [], isLoading, hasAllLoaded, errors, loadUsers) => (
 ```
 
 ```js
-import { consume } from 'react-bundler';
+import { consume } from 'react-packet';
 import users from '../state/users';
 import UserList from './user-list';
 
@@ -262,7 +262,7 @@ const GroupUserList = consume(users.forGroup(props => props.groupId))(UserList);
 // <GroupUserList groupId="groupA" />
 ```
 
-You can call `consume()` with multiple bundles, but if any properties overlap, you'll have to combine them yourself with a `mapBundlesToProps`:
+You can call `consume()` with multiple packets, but if any properties overlap, you'll have to combine them yourself with a `mapPacketsToProps`:
 
 ```js
 const CompareUserLists = ({ listA, listB }) => (
