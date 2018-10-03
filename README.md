@@ -59,7 +59,8 @@ const users = packAll({
     // E.g. this can be used like `user.forGroup(props => props.groupId)`
     forGroup: {
 
-        // The `selector` property is analogous to mapStateToProps, but it takes in the results of the prop selectors instead of props themselves
+        // The `selector` property is analogous to mapStateToProps, but it takes in the results of the 
+        // prop selectors instead of props themselves
         // It should return the props to inject into a component
         selector: (state, groupId) => {
             return {
@@ -68,8 +69,10 @@ const users = packAll({
             };
         },
 
-        // The `actions` property is analogous to mapDispatchToProps, but it takes in the results of the prop selectors instead of props themselves
-        // If you don't need any context like groupId, `actions` can be a plain object and each function property will be composed with `dispatch`,
+        // The `actions` property is analogous to mapDispatchToProps, but it takes in the results of 
+        // the prop selectors instead of props themselves
+        // If you don't need any context like groupId, `actions` can be a plain object and each function
+        // property will be composed with `dispatch`,
         // similar to if you had passed an object to mapDispatchToProps.
         actions: (dispatch, groupId) => {
             return {
@@ -95,7 +98,8 @@ const UserList = ({ users, loadUsers }) => (
     <button onClick={loadUsers}>Load</button>
 );
 
-// grab the packets you want for your current context and pass them to consume() to create a higher-order component.
+// grab the packets you want for your current context and pass them to consume() to
+// create a higher-order component.
 const withUsersForGroup = consume(users.forGroup(props => props.groupId));
 const GroupUserList = withUsersForGroup(UserList);
 ReactDOM.render(
