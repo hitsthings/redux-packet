@@ -189,7 +189,7 @@ Redux states are generally normalized so that details about an entity can be sha
 
 But when working with this state in your code, you typically don't want to deal with all that normalized state and understanding how it fits together. Ideally you'd handle that all in one place and expose it in a more intuitive shape. This is where Redux Packet comes in. It encourages you to create that "one place".
 
-### pack()
+### pack() and packAll()
 
 `pack()` is how you create that place. `pack` lets you define selectors and action creators that take in any context from the caller, and output the appropriate props and actionCreators. Below you'll see a `users.forGroup(props => props.groupId)` packet and a `users.forProject(props => props.projectId)` packet. Each has a `selector` and an `actions` property that deliver tailored data about users. 
 
@@ -198,8 +198,8 @@ But when working with this state in your code, you typically don't want to deal 
 
 import { pack } from 'redux-packet';
 
-export default pack({
-    forGroup: {
+export default {
+    forGroup: pack({
         selector: (state, groupId) => {
             // ...combine all the various bits of state...
             const usersForGroup = state.usersByGroup[groupId];
@@ -217,8 +217,8 @@ export default pack({
         actions: (dispatch, groupId) => ({
             loadUsers: () => dispatch({ type: 'LOAD_USERS', groupId })
         })
-    },
-    forProject: {
+    }),
+    forProject: pack({
         selector: (state, projectId, filterTerm) => {
             // ...combine all the various bits of state...
             const usersForProject = state.usersByProject[projectId];
@@ -232,7 +232,24 @@ export default pack({
         actions: (dispatch, projectId, filterTerm) => ({
             loadUsers: () => dispatch({ type: 'LOAD_USERS', projectId })
         })
+    })
+};
+```
+
+To simplify writing multiple packets, you can use `packAll` which expects each property on an object to be a packetDescription.
+
+```js
+import { packAll } from 'redux-packet';
+
+export default packAll({
+    forGroup: {
+        selector: ...,
+        actions: ...
     },
+    forProject: {
+        selector: ...,
+        actions: ...
+    }
 });
 ```
 
