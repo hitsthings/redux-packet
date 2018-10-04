@@ -110,6 +110,10 @@ ReactDOM.render(
 
 ## API Reference
 
+- [pack()](https://github.com/hitsthings/redux-packet#packpacketdescription--packetdescription--packetmaker)
+- [packAll()](https://github.com/hitsthings/redux-packet#packallpacketdescriptionmap--packetdescriptionmap---key-string-packetmaker-)
+- [consume()](https://github.com/hitsthings/redux-packet#consumepackets-mappacketstoprops-mergeprops-connectoptions--component--connectedcomponent)
+
 ### `pack(packetDescription : PacketDescription) : PacketMaker`
 
 Given a `packetDescription` returns a `PacketMaker` function that can be called in React components.
