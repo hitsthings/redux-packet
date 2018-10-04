@@ -1,12 +1,12 @@
 {
   "dist/redux-packet.js": {
-    "bundled": 9540,
-    "minified": 5916,
-    "gzipped": 1902
+    "bundled": 8061,
+    "minified": 6061,
+    "gzipped": 1938
   },
   "dist/redux-packet.dev.js": {
-    "bundled": 14757,
-    "minified": 5925,
-    "gzipped": 1909
+    "bundled": 14975,
+    "minified": 6070,
+    "gzipped": 1939
   }
 }

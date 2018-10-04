@@ -80,7 +80,7 @@
           actions: (contextA, contextB) => `actionsForContext`,
       }
   })
-  const users = pack({
+  const users = packAll({
       fromGroup: {
           selector: () => createStructuredSelector({
               users: usersForGroupSelector,
@@ -142,6 +142,10 @@
 
     if (packetDescriptor.actions && typeof packetDescriptor.actions !== 'function' && _typeof(packetDescriptor.actions) !== 'object') {
       throw new TypeError("".concat(calledFnName, " expects actions to be a function or object, but ").concat(name, ".actions was not."));
+    }
+
+    if (!packetDescriptor.selector && !packetDescriptor.actions) {
+      throw new TypeError("".concat(calledFnName, " expects either selector or actions to be present, but ").concat(name, " had neither."));
     }
   };
 

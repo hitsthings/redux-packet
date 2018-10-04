@@ -58,6 +58,9 @@ const checkPacketDescriptor = (packetDescriptor, name, calledFnName, argExpectat
     if (packetDescriptor.actions && (typeof packetDescriptor.actions !== 'function' && typeof packetDescriptor.actions !== 'object')) {
         throw new TypeError(`${calledFnName} expects actions to be a function or object, but ${name}.actions was not.`);
     }
+    if (!packetDescriptor.selector && !packetDescriptor.actions) {
+        throw new TypeError(`${calledFnName} expects either selector or actions to be present, but ${name} had neither.`);
+    }
 };
 
 const checkPacketMapAndGetNames = packetMap => {

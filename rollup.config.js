@@ -1,6 +1,7 @@
 var rollup = require("rollup");
 var babel = require("rollup-plugin-babel");
 var { sizeSnapshot } = require("rollup-plugin-size-snapshot");
+import cleanup from 'rollup-plugin-cleanup';
 
 const makeConfig = ({ file, minify } = {}) => ({
     input: "index.js",
@@ -23,7 +24,7 @@ const makeConfig = ({ file, minify } = {}) => ({
             presets: minify ? ["minify"] : []
         }),
         sizeSnapshot()
-    ]
+    ].concat(minify ? cleanup() : [])
 });
 
 const prod = makeConfig({ file: 'dist/redux-packet.js', minify: true });

@@ -23,6 +23,8 @@ describe('packAll()', () => {
                 {a: {actions:true}},
                 {a: {actions:1}},
                 {a: {actions:'string'}},
+                { a:{} },
+                { a:{}, b: {} },
             ].forEach(value =>
                 it(String(JSON.stringify(value)), () => {
                     expect(() => packAll(value).toThrowErrorMatchingSnapshot())
@@ -31,11 +33,10 @@ describe('packAll()', () => {
         });
         describe('accepts valid input', () => {
             [
-                { a:{} },
-                { a:{}, b: {} },
                 { a:{ selector: () => {}} },
                 { a:{ actions: {} } },
                 { a:{ actions: () => {} } },
+                { a:{ selector: () => {}}, b: { actions: {} } },
             ].forEach(value => {
                 it(String(JSON.stringify(value)), () => {
                     expect(() => packAll(value)).not.toThrow();
@@ -44,17 +45,17 @@ describe('packAll()', () => {
         });
         
         it('returns an object of functions with keys matching the input', () => {
-            expect(packAll({ a: {}})).toEqual({ a: expect.any(Function) });
+            expect(packAll({ a: { selector: () => {} }})).toEqual({ a: expect.any(Function) });
         });
     });
 
     describe('minimumSelectorsExpected', () => {
         it('does not validate if not passed in', () => {
-            const packed = packAll({ a: { }});
+            const packed = packAll({ a: { selector: () => {} }});
             expect(() => packed.a()).not.toThrow();
         })
         it('validates contextSelector count', () => {
-            const packed = packAll({ a: { minimumSelectorsExpected: 1 }});
+            const packed = packAll({ a: {  selector: () => {}, minimumSelectorsExpected: 1 }});
             expect(() => packed.a()).toThrowErrorMatchingSnapshot();
             expect(() => packed.a(() => {})).not.toThrow();
             expect(() => packed.a(() => {}, () => {})).not.toThrow();
