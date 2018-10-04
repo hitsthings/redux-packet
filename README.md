@@ -114,44 +114,59 @@ ReactDOM.render(
 
 Given a `packetDescription` returns a `PacketMaker` function that can be called in React components.
 
-##### `PacketDescription` `{ selector?: Selector|()=>Selector, actions?: Actions|{}, minimumSelectorsExpected?: number}`
+##### `PacketDescription`
+`{ selector?: Selector|()=>Selector, actions?: Actions|{}, minimumSelectorsExpected?: number}`
 
 An object that describes what state and action props are provided in the packet. It must have at least one of a `selector` property and an `actions` property. It can also have a `minimumSelectorsExpected` to enforce that consumers pass in a certain number of context selectors.
 
-##### `Selector` `(state, ...contextProps) => stateProps`
+##### `Selector`
+`(state, ...contextProps) => stateProps`
 
 The `selector` property takes in the Redux state and the results from any context selectors. For example, in `users.forGroup(props => props.groupId)`
 the selector would receive the value of the `groupId` prop from the component.
 
-##### `Actions` `(dispatch, ...contextProps) => dispatchProps`
+##### `Actions`
+`(dispatch, ...contextProps) => dispatchProps`
 
 The `actions` property takes in the Redux dispatch and the results from any context selectors. For example, in `users.forGroup(props => props.groupId)`
 the actions would receive the value of the `groupId` prop from the component.
 
 Alternatively, you can pass in an object of functions. Each function property will be composed with dispatch for you.
 
-##### `PacketMaker` `(...contextSelectors) => Packet`
-##### `Packet` `{ mapStateToProps, mapDispatchToProps, minimumSelectorsExpected?: number }`
+##### `PacketMaker`
+`(...contextSelectors) => Packet`
+
+##### `Packet`
+`{ mapStateToProps, mapDispatchToProps, minimumSelectorsExpected?: number }`
 
 ### `packAll(packetDescriptionMap : PacketDescriptionMap) : { [key: string]: PacketMaker }`
 
 Given an object where each property is a `packetDescription`, return a new object with the same property names whose values are the generated `Packet`s.
 
-##### `PacketDescriptionMap` `{ [key: string]: PacketDescription }`
+##### `PacketDescriptionMap`
+`{ [key: string]: PacketDescription }`
 
 ### `consume(packets[, mapPacketsToProps[, mergeProps[, connectOptions]]]) : Component => ConnectedComponent`
 
-##### `packets` `Array<Packet>|Packet`
+##### `packets`
+`Array<Packet>|Packet`
 
-##### `mapPacketsToProps(...packetProps)` `(...Array<{}>) => {}`
+##### `mapPacketsToProps(...packetProps)`
+`(...Array<{}>) => {}`
 
 Takes in the stash and dispatch props from each packet as a separate argument and combines all properties into one object. For example,
 it might be called like `mapPacketsToProps({ users, loadUsers }, { projects, loadProjects })`. By default each arguments will be combined into
 a single object with `Object.assign`.
 
-##### `mergeProps(allPacketProps, ownProps)` `(Array<{}>, Array<{}>) => {}`
+##### `mergeProps(allPacketProps, ownProps)`
+`(Array<{}>, Array<{}>) => {}`
 
 Combine the packed properties with any properties passed in from the parent. Be default this will use `Object.assign({}, ownProps, allPacketProps)`.
+
+##### `connectOptions`
+`ConnectOptions`
+
+Options which will be passed directly to [react-redux connect()](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options)
 
 ## Longer Example
 
