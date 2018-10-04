@@ -1,5 +1,13 @@
 # Redux Packet
 
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
+    - [pack()](#packpacketdescription--packetdescription--packetmaker)
+    - [packAll()](#packallpacketdescriptionmap--packetdescriptionmap---key-string-packetmaker-)
+    - [consume()](#consumepackets-mappacketstoprops-mergeprops-connectoptions--component--connectedcomponent)
+- [Detailed example](#detailed-example)
+
 Redux Packet is an alternative interface to `react-redux` that helps you hide the internal complexity of action creators and selectors from your components and encapsulates that logic in topic-based files.
 Packet helps you to think in terms of `Users`, `Projects`, `Groups`, `OtherBusinessObjects` instead of separating out `selectors`, `action creators`, and `reducers`.
 
@@ -110,13 +118,9 @@ ReactDOM.render(
 
 ## API Reference
 
-- [pack()](https://github.com/hitsthings/redux-packet#packpacketdescription--packetdescription--packetmaker)
-- [packAll()](https://github.com/hitsthings/redux-packet#packallpacketdescriptionmap--packetdescriptionmap---key-string-packetmaker-)
-- [consume()](https://github.com/hitsthings/redux-packet#consumepackets-mappacketstoprops-mergeprops-connectoptions--component--connectedcomponent)
-
 ### `pack(packetDescription : PacketDescription) : PacketMaker`
 
-Given a `packetDescription` returns a `PacketMaker` function that can be called in React components.
+Given a `packetDescription` returns a `PacketMaker` function that can be called in React components that `consume()` them.
 
 ##### `PacketDescription`
 `{ selector?: Selector|()=>Selector, actions?: Actions|{}, minimumSelectorsExpected?: number}`
@@ -140,8 +144,13 @@ Alternatively, you can pass in an object of functions. Each function property wi
 ##### `PacketMaker`
 `(...contextSelectors) => Packet`
 
+Functions returned from `pack()` and `packAll()` that take in context selectors and output `consume()`-able packs.
+
 ##### `Packet`
 `{ mapStateToProps, mapDispatchToProps, minimumSelectorsExpected?: number }`
+
+The shape that a `PacketMaker` outputs. You could put the `mapStateToProps` and `mapDispatchToProps` into `connect()` directly if you wanted to.
+But it's easier to treat these as opaque shapes you pass to `consume()`
 
 ### `packAll(packetDescriptionMap : PacketDescriptionMap) : { [key: string]: PacketMaker }`
 
@@ -149,6 +158,8 @@ Given an object where each property is a `packetDescription`, return a new objec
 
 ##### `PacketDescriptionMap`
 `{ [key: string]: PacketDescription }`
+
+An object where each property is a `packetDescription`.
 
 ### `consume(packets[, mapPacketsToProps[, mergeProps[, connectOptions]]]) : Component => ConnectedComponent`
 
@@ -172,7 +183,7 @@ Combine the packed properties with any properties passed in from the parent. Be 
 
 Options which will be passed directly to [react-redux connect()](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options)
 
-## Longer Example
+## Detailed Example
 
 Redux states are generally normalized so that details about an entity can be shared and updated as new data comes in. That means when thinking about users, groups, projects, and the relationships between them, you might have state like this:
 
