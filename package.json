@@ -1,6 +1,6 @@
 {
   "name": "redux-packet",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Deliver a packet of state and keep your Redux code hidden",
   "main": "dist/redux-packet.js",
   "browser": "dist/redux-packet.js",
