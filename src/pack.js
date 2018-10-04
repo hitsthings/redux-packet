@@ -8,7 +8,7 @@ packAll({
         actions: (contextA, contextB) => `actionsForContext`,
     }
 })
-const users = pack({
+const users = packAll({
     fromGroup: {
         selector: () => createStructuredSelector({
             users: usersForGroupSelector,

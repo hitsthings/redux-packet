@@ -3,7 +3,7 @@
 Redux Packet is an alternative interface to `react-redux` that helps you hide the internal complexity of action creators and selectors from your components and encapsulates that logic in topic-based files.
 Packet helps you to think in terms of `Users`, `Projects`, `Groups`, `OtherBusinessObjects` instead of separating out `selectors`, `action creators`, and `reducers`.
 
-Instead of this in your components:
+Don't write this in your components:
 
 ```js
 import { connect } from 'react-redux';
@@ -22,7 +22,7 @@ const mapDispatchToProps = (dispatch, props) => {
 export default connect(mapStateToProps, mapDispatchToProps)(UserList);
 ```
 
-Write this:
+Write this instead:
 
 ```js
 import { consume } from 'redux-packet';
