@@ -104,22 +104,26 @@ describe('consume()', () => {
         });
     });
     describe('makeMergePropsOnePacket()', () => {
-        const stateProps = { state: true };
-        const dispatchProps = { dispatch: true };
-        const ownProps = { own: true };
+        const stateProps = { state: true, stateDispatch: false, stateOwn: true };
+        const dispatchProps = { dispatch: true, stateDispatch: true };
+        const ownProps = { own: true, stateOwn: false };
         const mappedProps = {
             state: true,
-            dispatch: true
+            dispatch: true,
+            stateDispatch: true,
+            stateOwn: true,
         };
         const mergedProps = {
             state: true,
             dispatch: true,
-            own: true
+            stateDispatch: true,
+            own: true,
+            stateOwn: true,
         };
         it('returns undefined if no functions passed', () => {
             expect(makeMergePropsOnePacket()).toBeUndefined();
         });
-        it('calls mergeProps with state+dispatch props and ownProps if no mappacketsToProps is defined', () => {
+        it('calls mergeProps with state+dispatch props and ownProps if no mapPacketsToProps is defined', () => {
             const mergeProps = jest.fn().mockReturnValue(mergedProps);
             const generatedMergeProps = makeMergePropsOnePacket(undefined, mergeProps);
             expect(generatedMergeProps(stateProps, dispatchProps, ownProps)).toBe(mergedProps);
@@ -229,14 +233,14 @@ describe('consume()', () => {
     describe('packAll mapDispatchToProps handling', () => {
         const worksTest = (getArgs) => () => {
             const { expectContext, extraPacket, extraPacketMapped } = getArgs();
-            const state = {}, props = {};
-            const stateProps = expectContext ? [state, props] : [state];
+            const state = {}, props = {}, dispatch = jest.fn();
+            const dispatchProps = expectContext ? [dispatch, props] : [dispatch];
 
             const mapped = {};
             const packetMapDispatch = jest.fn().mockReturnValue(mapped);
             const packet = {
                 mapStateToProps: jest.fn(),
-                mapDispatchToProps: functionOfLength(stateProps.length, packetMapDispatch),
+                mapDispatchToProps: functionOfLength(dispatchProps.length, packetMapDispatch),
             };
             const packets = extraPacket ? [packet, extraPacket] : [packet];
             const mappedArray = extraPacket ? [mapped, extraPacketMapped] : [mapped];
@@ -250,13 +254,13 @@ describe('consume()', () => {
             expect(connected).toEqual(connectReturn);
 
             const [makeMapStateToProps, mapDispatchToProps] = connect.mock.calls[0];
-            expect(mapDispatchToProps.length).toBe(stateProps.length);
+            expect(mapDispatchToProps.length).toBe(dispatchProps.length);
 
-            const propMappedDispatch = mapDispatchToProps(state, props);
+            const propMappedDispatch = mapDispatchToProps(dispatch, props);
             if (packets.length === 1) {
                 expect(mapDispatchToProps).toBe(packet.mapDispatchToProps);
             } else {
-                expect(packetMapDispatch).toBeCalledWith(...stateProps);
+                expect(packetMapDispatch).toBeCalledWith(...dispatchProps);
             }
             expect(packetMapDispatch).toBeCalledTimes(1);
         };

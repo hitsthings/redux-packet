@@ -30,8 +30,8 @@ const spreadAllSafe = fallbackName => (...values) => {
 };
 const defaultMapPacketsToProps = spreadAllSafe("mapPacketsToProps");
 const defaultMergeProps = (packetProps, ownProps) => ({
-    ...packetProps,
-    ...ownProps
+    ...ownProps,
+    ...packetProps
 })
 
 const noop = () => {};
@@ -53,11 +53,11 @@ export const makeMergePropsOnePacket = (mapPacketsToProps, mergeProps) => {
     }
     if (!mergeProps) {
         return (stateProps, dispatchProps, ownProps) => ({
+            ...ownProps,
             ...mapPacketsToProps({
                 ...stateProps,
                 ...dispatchProps
-            }),
-            ...ownProps
+            })
         });
     }
     return (stateProps, dispatchProps, ownProps) => mergeProps(
