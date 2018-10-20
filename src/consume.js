@@ -2,8 +2,8 @@ import { bindActionCreators } from "redux";
 import { connect } from 'react-redux';
 
 /*
-//usage of component
-component([
+//usage of consume
+consume([
     users.fromGroup(props => props.group),
     cards.fromProject(props => props.project, props => props.filterTerm),
 ])(({ users = [], usersLoading, usersAllLoaded, usersLoadingErrors, cards, cardsLoading, cardsLoadingErrors, loadUsers, addUserToGroup}) => (
@@ -17,26 +17,25 @@ component([
     </div>
 ))
 */
-const uniqueFilter = (value, i, values) => values.lastIndexOf(value) === i;
+const concatKeys = (arr, obj) => arr.concat(Object.keys(obj));
 const nonUniqueFilter = (value, i, values) => values.lastIndexOf(value) !== i;
-const spreadAllSafe = fallbackName => (...values) => {
-    const nonUniqueProps = values.reduce((a, v) => a.concat(Object.keys(v)),[]).filter(nonUniqueFilter);
+const defaultMapPacketsToProps = (...values) => {
+    const nonUniqueProps = values.reduce(concatKeys,[]).filter(nonUniqueFilter);
     if (nonUniqueProps.length) {
         throw new Error("Props are not unique. " +
-            "Pass in " + fallbackName + " to deduplicate them. " +
+            "Pass in mapPacketsToProps to deduplicate them. " +
             "Duplicate names: " + nonUniqueProps.join(','));
     }
     return Object.assign({}, ...values);
 };
-const defaultMapPacketsToProps = spreadAllSafe("mapPacketsToProps");
 const defaultMergeProps = (packetProps, ownProps) => ({
     ...ownProps,
     ...packetProps
 })
 
-const noop = () => {};
-
-const anyContext = (packets, prop) => packets.some(b => typeof b[prop] === 'function' && b[prop].length !== 1);
+const noop = (a) => {};
+const usesContext = fn => typeof fn === 'function' && (fn.dependsOnOwnProps == null ? fn.length !== 1 : Boolean(fn.dependsOnOwnProps));
+const stateUsesContext = packet => usesContext(packet.mapStateToProps);
 
 export const makeMergePropsOnePacket = (mapPacketsToProps, mergeProps) => {
     if (!mapPacketsToProps) {
@@ -81,46 +80,33 @@ export const consumeOnePacket = (
     options
 );
 
+const mapAllToPackets = mappers => {
+    const anyContext = mappers.filter(Boolean).some(usesContext);
+    return anyContext
+        ? (stateOrDispatch, props) => ({
+            packets: mappers.map(mapper => mapper(stateOrDispatch, props))
+        })
+        : stateOrDispatch => ({
+            packets: mappers.map(mapper => mapper(stateOrDispatch))
+        });
+};
+
 export const makeMapStateToProps = (packets, withState) =>
     (withState.length || undefined) && (
-        anyContext(withState, 'mapStateToProps')
-            ? (state, props) => {
-                const mapStateToPropsList = packets
-                    .map(b => b.mapStateToProps ? b.mapStateToProps(state, props) : noop);
-                return (state, props) => ({
-                    packets: mapStateToPropsList.map(mapper => mapper(state, props))
-                });
-            }
-            : state => {
-                const mapStateToPropsList = packets
-                    .map(b => b.mapStateToProps ? b.mapStateToProps(state) : noop);
-                return state => ({
-                    packets: mapStateToPropsList.map(mapper => mapper(state))
-                });
-            }
+        withState.some(stateUsesContext)
+            ? (state, props) => mapAllToPackets(packets.map(b => b.mapStateToProps ? b.mapStateToProps(state, props) : noop))
+            : state => mapAllToPackets(packets.map(b => b.mapStateToProps ? b.mapStateToProps(state) : noop))
     );
 
 export const makeMapDispatchToProps = (packets, withDispatch) =>
     (withDispatch.length || undefined) && (
-        anyContext(withDispatch, 'mapDispatchToProps')
-            ? (dispatch, props) => ({
-                packets: packets.map(b =>
-                    b.mapDispatchToProps
-                        ? typeof b.mapDispatchToProps === 'function'
-                            ? b.mapDispatchToProps(dispatch, props)
-                            : bindActionCreators(b.mapDispatchToProps, dispatch)
-                        : undefined
-                )
-            })
-            : (dispatch) => ({
-                packets: packets.map(b =>
-                    b.mapDispatchToProps
-                        ? typeof b.mapDispatchToProps === 'function'
-                            ? b.mapDispatchToProps(dispatch)
-                            : bindActionCreators(b.mapDispatchToProps, dispatch)
-                        : undefined
-                )
-            })
+        mapAllToPackets(packets.map(packet =>
+            packet.mapDispatchToProps
+                ? typeof packet.mapDispatchToProps === 'function'
+                    ? packet.mapDispatchToProps
+                    : dispatch => bindActionCreators(packet.mapDispatchToProps, dispatch)
+                : noop
+        ))
     );
 
 export const makeMergeProps = (mapPacketsToProps, mergeProps) => {
@@ -143,6 +129,18 @@ export const makeMergeProps = (mapPacketsToProps, mergeProps) => {
     };
 };
 
+export const consumeMultiplePackets = (
+    packets,
+    mapPacketsToProps,
+    mergeProps,
+    options
+) => connect(
+    makeMapStateToProps(packets, packets.filter(b => b.mapStateToProps)),
+    makeMapDispatchToProps(packets, packets.filter(b => b.mapDispatchToProps)),
+    makeMergeProps(mapPacketsToProps, mergeProps),
+    options
+);
+
 export const consume = (
     packets,
     mapPacketsToProps,
@@ -153,15 +151,11 @@ export const consume = (
         packets = [packets];
     }
     if (!Array.isArray(packets) || packets.length === 0) {
-        throw new TypeError('At least one packets must be passed to component()')
+        throw new TypeError('At least one packet must be passed to consume()')
     }
 
-    if (packets.length === 1) return consumeOnePacket(packets[0], mapPacketsToProps, mergeProps, options);
-
-    return connect(
-        makeMapStateToProps(packets, packets.filter(b => b.mapStateToProps)),
-        makeMapDispatchToProps(packets, packets.filter(b => b.mapDispatchToProps)),
-        makeMergeProps(mapPacketsToProps, mergeProps),
-        options
-    );
+    if (packets.length === 1) {
+        return consumeOnePacket(packets[0], mapPacketsToProps, mergeProps, options);
+    }
+    return consumeMultiplePackets(packets, mapPacketsToProps, mergeProps, options);
 };

@@ -1,3 +1,3 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`packAll() minimumSelectorsExpected validates contextSelector count 1`] = `"The packet a expects at least 1 selectors to be provided."`;
+exports[`packAll() minimumSelectorsExpected validates contextSelector count 1`] = `"The packet a expects at least 1 selector to be provided."`;

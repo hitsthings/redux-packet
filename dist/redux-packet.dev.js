@@ -76,7 +76,7 @@
   //usage of pack
   packAll({
       fromContext: {
-          selector: (state, contextA, contextB) => `itemsInContext`, // or a function returning this to make one per component
+          selector: (state, contextA, contextB) => `itemsInContext`, // or a function returning this to make one selector per component for caching purposes
           actions: (contextA, contextB) => `actionsForContext`,
       }
   })
@@ -190,7 +190,8 @@
       var executeContextSelectors = hasContext && selectorExecutor(contextSelectors);
 
       if ('minimumSelectorsExpected' in packetDescriptor && contextSelectors.length < packetDescriptor.minimumSelectorsExpected) {
-        throw new Error("The packet ".concat(name, " expects at least ").concat(packetDescriptor.minimumSelectorsExpected, " selectors to be provided."));
+        var expected = packetDescriptor.minimumSelectorsExpected;
+        throw new Error("The packet ".concat(name, " expects at least ").concat(expected, " ").concat(expected === 1 ? 'selector' : 'selectors', " to be provided."));
       }
 
       var mapStateToProps = packetDescriptor.selector ? function (firstState, firstProps) {
@@ -251,40 +252,57 @@
     }, {});
   };
 
+  /*
+  //usage of consume
+  consume([
+      users.fromGroup(props => props.group),
+      cards.fromProject(props => props.project, props => props.filterTerm),
+  ])(({ users = [], usersLoading, usersAllLoaded, usersLoadingErrors, cards, cardsLoading, cardsLoadingErrors, loadUsers, addUserToGroup}) => (
+      <div>
+          <button disabled={usersLoading || usersLoadingErrors} onClick={usersLoading || usersLoadingErrors ? null : loadUsers}>
+              Load users
+          </button>
+          {users.map(user => (
+              <p key={user.id}>{user.name}</p>
+          ))}
+      </div>
+  ))
+  */
+
+  var concatKeys = function concatKeys(arr, obj) {
+    return arr.concat(Object.keys(obj));
+  };
+
   var nonUniqueFilter = function nonUniqueFilter(value, i, values) {
     return values.lastIndexOf(value) !== i;
   };
 
-  var spreadAllSafe = function spreadAllSafe(fallbackName) {
-    return function () {
-      for (var _len = arguments.length, values = new Array(_len), _key = 0; _key < _len; _key++) {
-        values[_key] = arguments[_key];
-      }
+  var defaultMapPacketsToProps = function defaultMapPacketsToProps() {
+    for (var _len = arguments.length, values = new Array(_len), _key = 0; _key < _len; _key++) {
+      values[_key] = arguments[_key];
+    }
 
-      var nonUniqueProps = values.reduce(function (a, v) {
-        return a.concat(Object.keys(v));
-      }, []).filter(nonUniqueFilter);
+    var nonUniqueProps = values.reduce(concatKeys, []).filter(nonUniqueFilter);
 
-      if (nonUniqueProps.length) {
-        throw new Error("Props are not unique. " + "Pass in " + fallbackName + " to deduplicate them. " + "Duplicate names: " + nonUniqueProps.join(','));
-      }
+    if (nonUniqueProps.length) {
+      throw new Error("Props are not unique. " + "Pass in mapPacketsToProps to deduplicate them. " + "Duplicate names: " + nonUniqueProps.join(','));
+    }
 
-      return Object.assign.apply(Object, [{}].concat(values));
-    };
+    return Object.assign.apply(Object, [{}].concat(values));
   };
-
-  var defaultMapPacketsToProps = spreadAllSafe("mapPacketsToProps");
 
   var defaultMergeProps = function defaultMergeProps(packetProps, ownProps) {
-    return _objectSpread({}, packetProps, ownProps);
+    return _objectSpread({}, ownProps, packetProps);
   };
 
-  var noop = function noop() {};
+  var noop = function noop(a) {};
 
-  var anyContext = function anyContext(packets, prop) {
-    return packets.some(function (b) {
-      return typeof b[prop] === 'function' && b[prop].length !== 1;
-    });
+  var usesContext = function usesContext(fn) {
+    return typeof fn === 'function' && (fn.dependsOnOwnProps == null ? fn.length !== 1 : Boolean(fn.dependsOnOwnProps));
+  };
+
+  var stateUsesContext = function stateUsesContext(packet) {
+    return usesContext(packet.mapStateToProps);
   };
 
   var makeMergePropsOnePacket = function makeMergePropsOnePacket(mapPacketsToProps, mergeProps) {
@@ -300,7 +318,7 @@
 
     if (!mergeProps) {
       return function (stateProps, dispatchProps, ownProps) {
-        return _objectSpread({}, mapPacketsToProps(_objectSpread({}, stateProps, dispatchProps)), ownProps);
+        return _objectSpread({}, ownProps, mapPacketsToProps(_objectSpread({}, stateProps, dispatchProps)));
       };
     }
 
@@ -311,45 +329,41 @@
   var consumeOnePacket = function consumeOnePacket(packet, mapPacketsToProps, mergeProps, options) {
     return reactRedux.connect(packet.mapStateToProps || undefined, packet.mapDispatchToProps || undefined, makeMergePropsOnePacket(mapPacketsToProps, mergeProps), options);
   };
+
+  var mapAllToPackets = function mapAllToPackets(mappers) {
+    var anyContext = mappers.filter(Boolean).some(usesContext);
+    return anyContext ? function (stateOrDispatch, props) {
+      return {
+        packets: mappers.map(function (mapper) {
+          return mapper(stateOrDispatch, props);
+        })
+      };
+    } : function (stateOrDispatch) {
+      return {
+        packets: mappers.map(function (mapper) {
+          return mapper(stateOrDispatch);
+        })
+      };
+    };
+  };
+
   var makeMapStateToProps = function makeMapStateToProps(packets, withState) {
-    return (withState.length || undefined) && (anyContext(withState, 'mapStateToProps') ? function (state, props) {
-      var mapStateToPropsList = packets.map(function (b) {
+    return (withState.length || undefined) && (withState.some(stateUsesContext) ? function (state, props) {
+      return mapAllToPackets(packets.map(function (b) {
         return b.mapStateToProps ? b.mapStateToProps(state, props) : noop;
-      });
-      return function (state, props) {
-        return {
-          packets: mapStateToPropsList.map(function (mapper) {
-            return mapper(state, props);
-          })
-        };
-      };
+      }));
     } : function (state) {
-      var mapStateToPropsList = packets.map(function (b) {
+      return mapAllToPackets(packets.map(function (b) {
         return b.mapStateToProps ? b.mapStateToProps(state) : noop;
-      });
-      return function (state) {
-        return {
-          packets: mapStateToPropsList.map(function (mapper) {
-            return mapper(state);
-          })
-        };
-      };
+      }));
     });
   };
   var makeMapDispatchToProps = function makeMapDispatchToProps(packets, withDispatch) {
-    return (withDispatch.length || undefined) && (anyContext(withDispatch, 'mapDispatchToProps') ? function (dispatch, props) {
-      return {
-        packets: packets.map(function (b) {
-          return b.mapDispatchToProps ? typeof b.mapDispatchToProps === 'function' ? b.mapDispatchToProps(dispatch, props) : redux.bindActionCreators(b.mapDispatchToProps, dispatch) : undefined;
-        })
-      };
-    } : function (dispatch) {
-      return {
-        packets: packets.map(function (b) {
-          return b.mapDispatchToProps ? typeof b.mapDispatchToProps === 'function' ? b.mapDispatchToProps(dispatch) : redux.bindActionCreators(b.mapDispatchToProps, dispatch) : undefined;
-        })
-      };
-    });
+    return (withDispatch.length || undefined) && mapAllToPackets(packets.map(function (packet) {
+      return packet.mapDispatchToProps ? typeof packet.mapDispatchToProps === 'function' ? packet.mapDispatchToProps : function (dispatch) {
+        return redux.bindActionCreators(packet.mapDispatchToProps, dispatch);
+      } : noop;
+    }));
   };
   var makeMergeProps = function makeMergeProps(mapPacketsToProps, mergeProps) {
     if (!mapPacketsToProps) {
@@ -369,21 +383,27 @@
       return mergeProps(packetProps, ownProps);
     };
   };
+  var consumeMultiplePackets = function consumeMultiplePackets(packets, mapPacketsToProps, mergeProps, options) {
+    return reactRedux.connect(makeMapStateToProps(packets, packets.filter(function (b) {
+      return b.mapStateToProps;
+    })), makeMapDispatchToProps(packets, packets.filter(function (b) {
+      return b.mapDispatchToProps;
+    })), makeMergeProps(mapPacketsToProps, mergeProps), options);
+  };
   var consume = function consume(packets, mapPacketsToProps, mergeProps, options) {
     if (packets && (packets.mapStateToProps || packets.mapDispatchToProps)) {
       packets = [packets];
     }
 
     if (!Array.isArray(packets) || packets.length === 0) {
-      throw new TypeError('At least one packets must be passed to component()');
+      throw new TypeError('At least one packet must be passed to consume()');
     }
 
-    if (packets.length === 1) return consumeOnePacket(packets[0], mapPacketsToProps, mergeProps, options);
-    return reactRedux.connect(makeMapStateToProps(packets, packets.filter(function (b) {
-      return b.mapStateToProps;
-    })), makeMapDispatchToProps(packets, packets.filter(function (b) {
-      return b.mapDispatchToProps;
-    })), makeMergeProps(mapPacketsToProps, mergeProps), options);
+    if (packets.length === 1) {
+      return consumeOnePacket(packets[0], mapPacketsToProps, mergeProps, options);
+    }
+
+    return consumeMultiplePackets(packets, mapPacketsToProps, mergeProps, options);
   };
 
   exports.pack = pack;

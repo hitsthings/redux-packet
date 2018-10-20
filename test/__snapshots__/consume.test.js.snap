@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`consume() makeMergeProps() throws on duplicate props by default (for different packets) 1`] = `"Props are not unique. Pass in mapPacketsToProps to deduplicate them. Duplicate names: conflict"`;

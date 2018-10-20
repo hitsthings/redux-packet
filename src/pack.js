@@ -4,7 +4,7 @@ import { bindActionCreators } from "redux";
 //usage of pack
 packAll({
     fromContext: {
-        selector: (state, contextA, contextB) => `itemsInContext`, // or a function returning this to make one per component
+        selector: (state, contextA, contextB) => `itemsInContext`, // or a function returning this to make one selector per component for caching purposes
         actions: (contextA, contextB) => `actionsForContext`,
     }
 })
@@ -87,7 +87,8 @@ const internalPack = (packetDescriptor, name) => {
         const hasContext = contextSelectors.length !== 0;
         const executeContextSelectors = hasContext && selectorExecutor(contextSelectors);
         if ('minimumSelectorsExpected' in packetDescriptor && contextSelectors.length < packetDescriptor.minimumSelectorsExpected) {
-            throw new Error(`The packet ${name} expects at least ${packetDescriptor.minimumSelectorsExpected} selectors to be provided.`);
+            const expected = packetDescriptor.minimumSelectorsExpected;
+            throw new Error(`The packet ${name} expects at least ${expected} ${expected === 1 ? 'selector' : 'selectors'} to be provided.`);
         }
         const mapStateToProps = packetDescriptor.selector ? (firstState, firstProps) => {
             const firstContext = hasContext ? executeContextSelectors(firstProps) : [];
