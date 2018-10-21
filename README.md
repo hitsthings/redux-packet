@@ -1,5 +1,6 @@
 # Redux Packet
 
+- [Why](#why)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
