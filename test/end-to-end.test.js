@@ -27,12 +27,24 @@ const set = (path, value) => ({
 });
 const get = (state, path) => path.split('.').reduce((o,p) => o && o[p], state);
 
-const inContext = context => ({
-    users: get(context, `users`),
-    usersLoading: get(context, `usersLoading`),
-    usersLoadingErrors: get(context, `usersLoadingErrors`),
-    usersLoaded: get(context, `usersLoaded`)
-});
+const cache = new Map();
+const cacheGetOr = (key, supply) => {
+    if (!cache.has(key)) {
+        cache.set(key, supply());
+    }
+    return cache.get(key);
+};
+
+const inContext = (state, path) => {
+    const context = get(state, path)
+    // cache against the object or undefined
+    return cacheGetOr(context, () => ({
+        users: get(context, `users`),
+        usersLoading: get(context, `usersLoading`),
+        usersLoadingErrors: get(context, `usersLoadingErrors`),
+        usersLoaded: get(context, `usersLoaded`)
+    }));
+};
 const loadForContext = (dispatch, context) => {
     dispatch(set(`${context}.usersLoading`, true));
     setTimeout(() => {
@@ -49,7 +61,7 @@ const loadForContext = (dispatch, context) => {
 const users = packAll({
     forGroup: {
         selector: (state, group) => {
-            return inContext(get(state, `groups.${group}`));
+            return inContext(state, `groups.${group}`);
         },
         actions: (dispatch, group) => ({
             loadUsersForGroup: () => loadForContext(dispatch, `groups.${group}`)
@@ -57,7 +69,7 @@ const users = packAll({
     },
     forProject: {
         selector: (state, project) => {
-            return inContext(get(state, `projects.${project}`));
+            return inContext(state, `projects.${project}`);
         },
         actions: (dispatch, project) => ({
             loadUsersForProject: () => loadForContext(dispatch, `projects.${project}`)
@@ -65,7 +77,7 @@ const users = packAll({
     },
     forProjectInGroup: {
         selector: (state, group, project) => {
-            return inContext(get(state, `groups.${group}.projects.${project}`));
+            return inContext(state, `groups.${group}.projects.${project}`);
         },
         actions: (dispatch, group, project) => ({
             loadUsers: () => loadForContext(dispatch, `groups.${group}.projects.${project}`)
@@ -161,6 +173,29 @@ describe('consume([packAll({...})])', () => {
     it('throws on duplicate props', () => {
         expect(withSupressedLogging(() => {
             ReactDOM.render(<Provider store={store}><DuplicatePropNames /></Provider>, document.createElement('div'));
-        })).toThrow();
-    })
+        })).toThrowErrorMatchingSnapshot();
+    });
+
+    it("doesn't rerender if relevant state hasn't changed", () => {
+        const mapPacketsToProps = jest.fn((forGroup, forProject) => forGroup);
+
+        const MyComponent = jest.fn().mockReturnValue(<div>Rendered</div>);
+        const StatefulMyComponent = consume(
+            [users.forGroup(() => 2), users.forProject(() => 2)],
+            mapPacketsToProps
+        )(MyComponent);
+
+        const container = document.createElement('div');
+        ReactDOM.render(<Provider store={store}><StatefulMyComponent /></Provider>, container);
+        expect(mapPacketsToProps).toBeCalledTimes(1);
+        expect(MyComponent).toBeCalledTimes(1);
+
+        store.dispatch(set("unrelated.path", 42));
+        expect(mapPacketsToProps).toBeCalledTimes(1);
+        expect(MyComponent).toBeCalledTimes(1);
+
+        store.dispatch(set(`groups.2.usersLoading`, true));
+        expect(mapPacketsToProps).toBeCalledTimes(2);
+        expect(MyComponent).toBeCalledTimes(2);
+    });
 });

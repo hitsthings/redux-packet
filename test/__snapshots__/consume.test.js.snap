@@ -1,3 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`consume() basic contract assertions throws on invalid input  1`] = `"At least one packet must be passed to consume()"`;
+
+exports[`consume() basic contract assertions throws on invalid input [] 1`] = `"At least one packet must be passed to consume()"`;
+
+exports[`consume() basic contract assertions throws on invalid input [{}],,,{} 1`] = `"areStatePropsEqual is not supported by consume(), as it exposes no concept of stateProps (just packetProps)"`;
+
+exports[`consume() basic contract assertions throws on invalid input {} 1`] = `"At least one packet must be passed to consume()"`;
+
 exports[`consume() makeMergeProps() throws on duplicate props by default (for different packets) 1`] = `"Props are not unique. Pass in mapPacketsToProps to deduplicate them. Duplicate names: conflict"`;

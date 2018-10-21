@@ -29,13 +29,18 @@ const functionOfLength = (n, innerFn) => {
 describe('consume()', () => {
     describe('basic contract assertions', () => {
         describe('throws on invalid input', () => {
+            const packet = {
+                mapStateToProps: jest.fn(),
+                mapDispatchToProps: jest.fn(),
+            };
             [
                 [undefined],
                 [{}],
-                [[]]
+                [[]],
+                [[packet], jest.fn(), jest.fn(), { areStatePropsEqual: jest.fn() }]
             ].forEach(value =>
                 it(String(value.map(p => JSON.stringify(p))), () => {
-                    expect(() => consume(...value).toThrowErrorMatchingSnapshot())
+                    expect(() => consume(...value)).toThrowErrorMatchingSnapshot();
                 })
             );
         });
@@ -67,7 +72,7 @@ describe('consume()', () => {
                 }
             ], jest.fn(), jest.fn(), options)).toEqual(connectReturn);
             expect(connect).toBeCalledTimes(1);
-            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), options);
+            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), {});
         });
     });
 
@@ -344,7 +349,7 @@ describe('consume()', () => {
 
             const connected = consume(packets, mapPacketsToProps);
             expect(connect).toBeCalledTimes(1);
-            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), undefined);
+            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), expect.objectContaining({}));
             expect(connected).toEqual(connectReturn);
 
             const [makeMapStateToProps, mapDispatchToProps, mergeProps, options] = connect.mock.calls[0];
@@ -423,7 +428,7 @@ describe('consume()', () => {
 
             const connected = consume(packets, mapPacketsToProps);
             expect(connect).toBeCalledTimes(1);
-            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), undefined);
+            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), expect.objectContaining({}));
             expect(connected).toEqual(connectReturn);
 
             const [makeMapStateToProps, mapDispatchToProps] = connect.mock.calls[0];
@@ -500,7 +505,7 @@ describe('consume()', () => {
 
             const connected = consume(packets, mapPacketsToProps, mergeProps);
             expect(connect).toBeCalledTimes(1);
-            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), undefined);
+            expect(connect).toBeCalledWith(expect.any(Function), expect.any(Function), expect.any(Function), expect.objectContaining({}));
             expect(connected).toEqual(connectReturn);
 
             const [makeMapStateToProps, mapDispatchToProps, mergeProps] = connect.mock.calls[0];

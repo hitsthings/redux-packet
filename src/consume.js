@@ -17,6 +17,19 @@ consume([
     </div>
 ))
 */
+
+const shallowEqualPackets = (a, b) => {
+    for(var i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+            return false;
+        }
+    }
+    return true;
+};
+const arePacketPropsEqual = (a, b) => {
+    return a === b || (a && b && a.packets && b.packets && shallowEqualPackets(a.packets, b.packets));
+}
+
 const concatKeys = (arr, obj) => arr.concat(Object.keys(obj));
 const nonUniqueFilter = (value, i, values) => values.lastIndexOf(value) !== i;
 const defaultMapPacketsToProps = (...values) => {
@@ -33,6 +46,7 @@ const defaultMergeProps = (packetProps, ownProps) => ({
     ...packetProps
 })
 
+// one arg so that our "uses context" checks return false
 const noop = (a) => {};
 const usesContext = fn => typeof fn === 'function' && (fn.dependsOnOwnProps == null ? fn.length !== 1 : Boolean(fn.dependsOnOwnProps));
 const stateUsesContext = packet => usesContext(packet.mapStateToProps);
@@ -134,12 +148,15 @@ export const consumeMultiplePackets = (
     mapPacketsToProps,
     mergeProps,
     options
-) => connect(
-    makeMapStateToProps(packets, packets.filter(b => b.mapStateToProps)),
-    makeMapDispatchToProps(packets, packets.filter(b => b.mapDispatchToProps)),
-    makeMergeProps(mapPacketsToProps, mergeProps),
-    options
-);
+) => {
+    options.areStatePropsEqual = arePacketPropsEqual;
+    return connect(
+        makeMapStateToProps(packets, packets.filter(b => b.mapStateToProps)),
+        makeMapDispatchToProps(packets, packets.filter(b => b.mapDispatchToProps)),
+        makeMergeProps(mapPacketsToProps, mergeProps),
+        options
+    );
+}
 
 export const consume = (
     packets,
@@ -152,6 +169,10 @@ export const consume = (
     }
     if (!Array.isArray(packets) || packets.length === 0) {
         throw new TypeError('At least one packet must be passed to consume()')
+    }
+    options = options || {};
+    if (options.areStatePropsEqual) {
+        throw new TypeError('areStatePropsEqual is not supported by consume(), as it exposes no concept of stateProps (just packetProps)');
     }
 
     if (packets.length === 1) {
