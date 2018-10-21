@@ -38,7 +38,7 @@ import users from './user-packet';
 export default consume(users.forGroup(props => props.groupId))(UserList);
 ```
 
-# Why?
+## Why?
 
 Redux is great for ensuring your data is decoupled from the data-handling code (e.g. action creators, reducers, selectors) so you can have time-travel debugging, easy hot reloading, etc. But it's less great at decoupling that data-handling code from widget display code. Tightly coupling your UI components to Redux means that changing your state requires changing your components.
 
