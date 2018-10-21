@@ -2,7 +2,7 @@ import React, { Fragment } from 'react';
 import ReactDOM from 'react-dom';
 import ReactTestUtils from 'react-dom/test-utils';
 import { createStore } from 'redux';
-import { connect, Provider } from 'react-redux';
+import { Provider } from 'react-redux';
 
 import { packAll } from '../src/pack';
 import { consume } from '../src/consume';
