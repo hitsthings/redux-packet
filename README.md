@@ -38,6 +38,12 @@ import users from './user-packet';
 export default consume(users.forGroup(props => props.groupId))(UserList);
 ```
 
+# Why?
+
+Redux is great for ensuring your data is decoupled from the data-handling code (e.g. action creators, reducers, selectors) so you can have time-travel debugging, easy hot reloading, etc. But it's less great at decoupling that data-handling code from widget display code. Tightly coupling your UI components to Redux means that changing your state requires changing your components.
+
+It's a good idea to keep the implementation details of Redux (e.g. the fact that all your state is stored in one `state` object, the fact that you interact with that state by using a special `dispatch` function and action objects that require a certain shape) separate from the ideal interface of Redux (I need this particular state, and give me functions to modify it). Redux Packet does just that.
+
 ## Installation
 
 If you already have `react-redux` and `redux` in your project, run
